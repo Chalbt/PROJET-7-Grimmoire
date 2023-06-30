@@ -39,15 +39,18 @@ exports.modifyBook = (req, res, next) => {
           if (book.userId != req.auth.userId) {
               res.status(401).json({ message : 'Non autorisé'});
           } else {
+              const isNewImageUploaded = req.file !== undefined;
+              if (isNewImageUploaded) {
+                const oldImageUrl = book.imageUrl;
+                const imageName = oldImageUrl.split('/images/')[1];
+                fs.unlink(`images/${imageName}`, () => {
+                  console.log(`Ancienne image supprimée : ${imageName}`);
+                });
+              }
+              
               Book.updateOne({ _id: req.params.id}, { ...bookObject, _id: req.params.id})
               .then(() => {
-                console.log(book.imageUrl)
-                const imagetodelete = book.imageUrl.split('/images/')[1]
-                fs.unlink(`images/${imagetodelete}`, () => {
-                  console.log(imagetodelete)
-                  res.status(200).json({message : 'Objet modifié!'}) 
-                });
-                
+                res.status(200).json({ message: 'Objet modifié!' });
               })
               .catch(error => res.status(401).json({ error }));
           }
